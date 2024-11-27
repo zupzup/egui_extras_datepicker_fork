@@ -679,5 +679,5 @@ impl<'a> DatePickerPopup<'a> {
 }
 
 fn month_name(i: usize, months: &[&'static str]) -> &'static str {
-    months[i + 1]
+    months[i - 1]
 }
