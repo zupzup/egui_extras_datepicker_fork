@@ -52,6 +52,10 @@ pub struct DatePickerButton<'a> {
     show_icon: bool,
     format: String,
     highlight_weekends: bool,
+    day_names: &'static [&'static str],
+    month_names: &'static [&'static str],
+    save_button_text: &'static str,
+    cancel_button_text: &'static str,
 }
 
 impl<'a> DatePickerButton<'a> {
@@ -66,7 +70,44 @@ impl<'a> DatePickerButton<'a> {
             show_icon: true,
             format: "%Y-%m-%d".to_owned(),
             highlight_weekends: true,
+            day_names: &["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+            month_names: &[
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+            ],
+            save_button_text: "Save",
+            cancel_button_text: "Cancel",
         }
+    }
+
+    pub fn day_names(mut self, day_names: &'static [&'static str]) -> Self {
+        self.day_names = day_names;
+        self
+    }
+
+    pub fn month_names(mut self, month_names: &'static [&'static str]) -> Self {
+        self.month_names = month_names;
+        self
+    }
+
+    pub fn save_button_text(mut self, text: &'static str) -> Self {
+        self.save_button_text = text;
+        self
+    }
+
+    pub fn cancel_button_text(mut self, text: &'static str) -> Self {
+        self.cancel_button_text = text;
+        self
     }
 
     /// Add id source.
@@ -200,6 +241,10 @@ impl<'a> Widget for DatePickerButton<'a> {
                                 calendar: self.calendar,
                                 calendar_week: self.calendar_week,
                                 highlight_weekends: self.highlight_weekends,
+                                day_names: self.day_names,
+                                month_names: self.month_names,
+                                save_button_text: self.save_button_text,
+                                cancel_button_text: self.cancel_button_text,
                             }
                             .draw(ui)
                         })
@@ -250,6 +295,10 @@ pub(crate) struct DatePickerPopup<'a> {
     pub calendar: bool,
     pub calendar_week: bool,
     pub highlight_weekends: bool,
+    pub day_names: &'static [&'static str],
+    pub month_names: &'static [&'static str],
+    pub save_button_text: &'static str,
+    pub cancel_button_text: &'static str,
 }
 
 impl<'a> DatePickerPopup<'a> {
@@ -321,14 +370,17 @@ impl<'a> DatePickerPopup<'a> {
                             });
                             strip.cell(|ui| {
                                 ComboBox::from_id_salt("date_picker_month")
-                                    .selected_text(month_name(popup_state.month))
+                                    .selected_text(month_name(
+                                        popup_state.month as usize,
+                                        self.month_names,
+                                    ))
                                     .show_ui(ui, |ui| {
                                         for month in 1..=12 {
                                             if ui
                                                 .selectable_value(
                                                     &mut popup_state.month,
                                                     month,
-                                                    month_name(month),
+                                                    month_name(month as usize, self.month_names),
                                                 )
                                                 .changed()
                                             {
@@ -373,11 +425,7 @@ impl<'a> DatePickerPopup<'a> {
                         builder.sizes(Size::remainder(), 6).horizontal(|mut strip| {
                             strip.cell(|ui| {
                                 ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
-                                    if ui
-                                        .button("<<<")
-                                        .on_hover_text("subtract one year")
-                                        .clicked()
-                                    {
+                                    if ui.button("<<<").on_hover_text(">>>").clicked() {
                                         popup_state.year -= 1;
                                         popup_state.day =
                                             popup_state.day.min(popup_state.last_day_of_month());
@@ -389,11 +437,7 @@ impl<'a> DatePickerPopup<'a> {
                             });
                             strip.cell(|ui| {
                                 ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
-                                    if ui
-                                        .button("<<")
-                                        .on_hover_text("subtract one month")
-                                        .clicked()
-                                    {
+                                    if ui.button("<<").on_hover_text("<<").clicked() {
                                         popup_state.month -= 1;
                                         if popup_state.month == 0 {
                                             popup_state.month = 12;
@@ -409,7 +453,7 @@ impl<'a> DatePickerPopup<'a> {
                             });
                             strip.cell(|ui| {
                                 ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
-                                    if ui.button("<").on_hover_text("subtract one day").clicked() {
+                                    if ui.button("<").on_hover_text("<").clicked() {
                                         popup_state.day -= 1;
                                         if popup_state.day == 0 {
                                             popup_state.month -= 1;
@@ -427,7 +471,7 @@ impl<'a> DatePickerPopup<'a> {
                             });
                             strip.cell(|ui| {
                                 ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
-                                    if ui.button(">").on_hover_text("add one day").clicked() {
+                                    if ui.button(">").on_hover_text(">").clicked() {
                                         popup_state.day += 1;
                                         if popup_state.day > popup_state.last_day_of_month() {
                                             popup_state.day = 1;
@@ -445,7 +489,7 @@ impl<'a> DatePickerPopup<'a> {
                             });
                             strip.cell(|ui| {
                                 ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
-                                    if ui.button(">>").on_hover_text("add one month").clicked() {
+                                    if ui.button(">>").on_hover_text(">>").clicked() {
                                         popup_state.month += 1;
                                         if popup_state.month > 12 {
                                             popup_state.month = 1;
@@ -461,7 +505,7 @@ impl<'a> DatePickerPopup<'a> {
                             });
                             strip.cell(|ui| {
                                 ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
-                                    if ui.button(">>>").on_hover_text("add one year").clicked() {
+                                    if ui.button(">>>").on_hover_text(">>>").clicked() {
                                         popup_state.year += 1;
                                         popup_state.day =
                                             popup_state.day.min(popup_state.last_day_of_month());
@@ -494,12 +538,12 @@ impl<'a> DatePickerPopup<'a> {
                                 }
 
                                 //TODO(elwerene): Locale
-                                for name in ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] {
+                                for name in self.day_names {
                                     header.col(|ui| {
                                         ui.with_layout(
                                             Layout::centered_and_justified(Direction::TopDown),
                                             |ui| {
-                                                ui.label(name);
+                                                ui.label(*name);
                                             },
                                         );
                                     });
@@ -598,14 +642,14 @@ impl<'a> DatePickerPopup<'a> {
                         strip.empty();
                         strip.cell(|ui| {
                             ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
-                                if ui.button("Cancel").clicked() {
+                                if ui.button(self.cancel_button_text).clicked() {
                                     close = true;
                                 }
                             });
                         });
                         strip.cell(|ui| {
                             ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
-                                if ui.button("Save").clicked() {
+                                if ui.button(self.save_button_text).clicked() {
                                     *self.selection = NaiveDate::from_ymd_opt(
                                         popup_state.year,
                                         popup_state.month,
@@ -634,20 +678,6 @@ impl<'a> DatePickerPopup<'a> {
     }
 }
 
-fn month_name(i: u32) -> &'static str {
-    match i {
-        1 => "January",
-        2 => "February",
-        3 => "March",
-        4 => "April",
-        5 => "May",
-        6 => "June",
-        7 => "July",
-        8 => "August",
-        9 => "September",
-        10 => "October",
-        11 => "November",
-        12 => "December",
-        _ => panic!("Unknown month: {i}"),
-    }
+fn month_name(i: usize, months: &[&'static str]) -> &'static str {
+    months[i + 1]
 }
