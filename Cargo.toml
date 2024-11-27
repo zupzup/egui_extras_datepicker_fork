@@ -1,0 +1,11 @@
+[package]
+name = "egui_extras_datepicker_fork"
+edition = "2021"
+
+[dependencies]
+egui = "0.29"
+egui_extras = "0.29" 
+chrono = { version = "0.4", default-features = false, features = [
+  "clock",
+  "std",
+] }
