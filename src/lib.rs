@@ -185,10 +185,11 @@ impl<'a> Widget for DatePickerButton<'a> {
             .unwrap_or_default();
 
         let mut text = if self.show_icon {
-            RichText::new(format!("{} 📆", self.selection.format(&self.format)))
+            RichText::new("📆")
         } else {
             RichText::new(format!("{}", self.selection.format(&self.format)))
         };
+
         let visuals = ui.visuals().widgets.open;
         if button_state.picker_visible {
             text = text.color(visuals.text_color());
