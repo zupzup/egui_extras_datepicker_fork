@@ -177,7 +177,7 @@ impl<'a> DatePickerButton<'a> {
     }
 }
 
-impl<'a> Widget for DatePickerButton<'a> {
+impl Widget for DatePickerButton<'_> {
     fn ui(self, ui: &mut Ui) -> egui::Response {
         let id = ui.make_persistent_id(self.id_salt);
         let mut button_state = ui
@@ -209,14 +209,14 @@ impl<'a> Widget for DatePickerButton<'a> {
             let mut pos = button_response.rect.left_bottom();
             let width_with_padding = width
                 + ui.style().spacing.item_spacing.x
-                + ui.style().spacing.window_margin.left
-                + ui.style().spacing.window_margin.right;
+                + ui.style().spacing.window_margin.leftf()
+                + ui.style().spacing.window_margin.rightf();
             if pos.x + width_with_padding > ui.clip_rect().right() {
                 pos.x = button_response.rect.right() - width_with_padding;
             }
 
             // Check to make sure the calendar never is displayed out of window
-            pos.x = pos.x.max(ui.style().spacing.window_margin.left);
+            pos.x = pos.x.max(ui.style().spacing.window_margin.leftf());
 
             //TODO(elwerene): Better positioning
 
@@ -302,7 +302,7 @@ pub(crate) struct DatePickerPopup<'a> {
     pub cancel_button_text: &'static str,
 }
 
-impl<'a> DatePickerPopup<'a> {
+impl DatePickerPopup<'_> {
     /// Returns `true` if user pressed `Save` button.
     pub fn draw(&mut self, ui: &mut Ui) -> bool {
         let id = ui.make_persistent_id("date_picker");
